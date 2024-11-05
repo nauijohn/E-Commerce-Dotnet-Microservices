@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
 namespace BuildingBlocks.Exceptions.Handler;
@@ -47,5 +48,24 @@ public class CustomExceptionHandler
                 httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError
             )
         };
+
+        var problemDetails = new ProblemDetails
+        {
+            Title = details.Title,
+            Status = details.StatusCode,
+            Detail = details.Detail,
+            Instance = httpContext.Request.Path
+        };
+
+        problemDetails.Extensions.Add("traceId", httpContext.TraceIdentifier);
+
+        if (exception is ValidationException validationException)
+        {
+            problemDetails.Extensions.Add("ValidationErrors", validationException.Errors);
+        }
+        await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken: cancellationToken);
+
+        return true;
     }
+
 }
