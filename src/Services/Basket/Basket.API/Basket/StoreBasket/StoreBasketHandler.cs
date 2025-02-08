@@ -11,7 +11,7 @@ public class StoreBasketCommandValidator : AbstractValidator<StoreBasketCommand>
         RuleFor(x => x.Cart.UserName).NotNull().WithMessage("UserName is required");
     }
 }
-public class StoreBasketCommandHandler
+public class StoreBasketCommandHandler(IBasketRepository repository)
     : ICommandHandler<StoreBasketCommand, StoreBasketResult>
 {
     public async Task<StoreBasketResult> Handle(StoreBasketCommand command, CancellationToken cancellationToken)
@@ -20,7 +20,8 @@ public class StoreBasketCommandHandler
 
         // TODO: store basket in database (use Marten upsert - if exist = update, if not exist = insert)
         // TODO: update cache
+        await repository.StoreBasket(command.Cart, cancellationToken);
 
-        return new StoreBasketResult("swn");
+        return new StoreBasketResult(command.Cart.UserName);
     }
 }
